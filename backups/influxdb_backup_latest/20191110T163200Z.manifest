@@ -1,0 +1,577 @@
+{
+  "meta": {
+    "fileName": "20191110T163200Z.meta",
+    "size": 3088
+  },
+  "limited": false,
+  "files": [
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 66,
+      "fileName": "20191110T163200Z.s66.tar.gz",
+      "size": 7680,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 67,
+      "fileName": "20191110T163200Z.s67.tar.gz",
+      "size": 70144,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 68,
+      "fileName": "20191110T163200Z.s68.tar.gz",
+      "size": 93184,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 69,
+      "fileName": "20191110T163200Z.s69.tar.gz",
+      "size": 99840,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 70,
+      "fileName": "20191110T163200Z.s70.tar.gz",
+      "size": 99328,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 71,
+      "fileName": "20191110T163200Z.s71.tar.gz",
+      "size": 86016,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 72,
+      "fileName": "20191110T163200Z.s72.tar.gz",
+      "size": 65536,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 73,
+      "fileName": "20191110T163200Z.s73.tar.gz",
+      "size": 81408,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 74,
+      "fileName": "20191110T163200Z.s74.tar.gz",
+      "size": 76288,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 75,
+      "fileName": "20191110T163200Z.s75.tar.gz",
+      "size": 79360,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 76,
+      "fileName": "20191110T163200Z.s76.tar.gz",
+      "size": 81920,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 77,
+      "fileName": "20191110T163200Z.s77.tar.gz",
+      "size": 79872,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 78,
+      "fileName": "20191110T163200Z.s78.tar.gz",
+      "size": 100352,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 79,
+      "fileName": "20191110T163200Z.s79.tar.gz",
+      "size": 82944,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 80,
+      "fileName": "20191110T163200Z.s80.tar.gz",
+      "size": 72704,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 81,
+      "fileName": "20191110T163200Z.s81.tar.gz",
+      "size": 83456,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 82,
+      "fileName": "20191110T163200Z.s82.tar.gz",
+      "size": 73216,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 83,
+      "fileName": "20191110T163200Z.s83.tar.gz",
+      "size": 77312,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 84,
+      "fileName": "20191110T163200Z.s84.tar.gz",
+      "size": 69632,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 85,
+      "fileName": "20191110T163200Z.s85.tar.gz",
+      "size": 68096,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 86,
+      "fileName": "20191110T163200Z.s86.tar.gz",
+      "size": 81408,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 87,
+      "fileName": "20191110T163200Z.s87.tar.gz",
+      "size": 75264,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 88,
+      "fileName": "20191110T163200Z.s88.tar.gz",
+      "size": 76288,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 89,
+      "fileName": "20191110T163200Z.s89.tar.gz",
+      "size": 67072,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 90,
+      "fileName": "20191110T163200Z.s90.tar.gz",
+      "size": 69632,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 91,
+      "fileName": "20191110T163200Z.s91.tar.gz",
+      "size": 59904,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 92,
+      "fileName": "20191110T163200Z.s92.tar.gz",
+      "size": 65024,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 93,
+      "fileName": "20191110T163200Z.s93.tar.gz",
+      "size": 66560,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 94,
+      "fileName": "20191110T163200Z.s94.tar.gz",
+      "size": 62976,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 95,
+      "fileName": "20191110T163200Z.s95.tar.gz",
+      "size": 58880,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 96,
+      "fileName": "20191110T163200Z.s96.tar.gz",
+      "size": 55296,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 97,
+      "fileName": "20191110T163200Z.s97.tar.gz",
+      "size": 40960,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 98,
+      "fileName": "20191110T163200Z.s98.tar.gz",
+      "size": 51200,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 99,
+      "fileName": "20191110T163200Z.s99.tar.gz",
+      "size": 49152,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 100,
+      "fileName": "20191110T163200Z.s100.tar.gz",
+      "size": 61440,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 101,
+      "fileName": "20191110T163200Z.s101.tar.gz",
+      "size": 52736,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 102,
+      "fileName": "20191110T163200Z.s102.tar.gz",
+      "size": 52224,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 103,
+      "fileName": "20191110T163200Z.s103.tar.gz",
+      "size": 55808,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 104,
+      "fileName": "20191110T163200Z.s104.tar.gz",
+      "size": 56320,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 105,
+      "fileName": "20191110T163200Z.s105.tar.gz",
+      "size": 68096,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 106,
+      "fileName": "20191110T163200Z.s106.tar.gz",
+      "size": 53248,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 107,
+      "fileName": "20191110T163200Z.s107.tar.gz",
+      "size": 53760,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 108,
+      "fileName": "20191110T163200Z.s108.tar.gz",
+      "size": 61440,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 109,
+      "fileName": "20191110T163200Z.s109.tar.gz",
+      "size": 59392,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 110,
+      "fileName": "20191110T163200Z.s110.tar.gz",
+      "size": 57856,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 111,
+      "fileName": "20191110T163200Z.s111.tar.gz",
+      "size": 60416,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 112,
+      "fileName": "20191110T163200Z.s112.tar.gz",
+      "size": 57344,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 113,
+      "fileName": "20191110T163200Z.s113.tar.gz",
+      "size": 58880,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 114,
+      "fileName": "20191110T163200Z.s114.tar.gz",
+      "size": 53760,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 115,
+      "fileName": "20191110T163200Z.s115.tar.gz",
+      "size": 40960,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 116,
+      "fileName": "20191110T163200Z.s116.tar.gz",
+      "size": 78848,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 117,
+      "fileName": "20191110T163200Z.s117.tar.gz",
+      "size": 75776,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 118,
+      "fileName": "20191110T163200Z.s118.tar.gz",
+      "size": 50176,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 119,
+      "fileName": "20191110T163200Z.s119.tar.gz",
+      "size": 50688,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 120,
+      "fileName": "20191110T163200Z.s120.tar.gz",
+      "size": 58368,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 121,
+      "fileName": "20191110T163200Z.s121.tar.gz",
+      "size": 59392,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 122,
+      "fileName": "20191110T163200Z.s122.tar.gz",
+      "size": 56320,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 123,
+      "fileName": "20191110T163200Z.s123.tar.gz",
+      "size": 51200,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 124,
+      "fileName": "20191110T163200Z.s124.tar.gz",
+      "size": 49664,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 125,
+      "fileName": "20191110T163200Z.s125.tar.gz",
+      "size": 47104,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 126,
+      "fileName": "20191110T163200Z.s126.tar.gz",
+      "size": 50688,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 127,
+      "fileName": "20191110T163200Z.s127.tar.gz",
+      "size": 41472,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 128,
+      "fileName": "20191110T163200Z.s128.tar.gz",
+      "size": 47104,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 129,
+      "fileName": "20191110T163200Z.s129.tar.gz",
+      "size": 41984,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 132,
+      "fileName": "20191110T163200Z.s132.tar.gz",
+      "size": 42496,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 140,
+      "fileName": "20191110T163200Z.s140.tar.gz",
+      "size": 40448,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 148,
+      "fileName": "20191110T163200Z.s148.tar.gz",
+      "size": 53248,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 156,
+      "fileName": "20191110T163200Z.s156.tar.gz",
+      "size": 61440,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 164,
+      "fileName": "20191110T163200Z.s164.tar.gz",
+      "size": 48128,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 172,
+      "fileName": "20191110T163200Z.s172.tar.gz",
+      "size": 60416,
+      "lastModified": 0
+    },
+    {
+      "database": "fortnite",
+      "policy": "autogen",
+      "shardID": 180,
+      "fileName": "20191110T163200Z.s180.tar.gz",
+      "size": 936960,
+      "lastModified": 0
+    }
+  ]
+}

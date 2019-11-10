@@ -1,0 +1,8 @@
+{
+    "require": {
+        "Tustin/fortnite-php": "^0.0.9",
+        "wruczek/php-file-cache": "^0.0.4",
+        "influxdb/influxdb-php": "^1.14",
+        "Tustin/fortnite-php": "^0.0.9"
+    }
+}
