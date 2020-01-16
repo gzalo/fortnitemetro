@@ -16,7 +16,7 @@ use InfluxDB\Point;
 
 function updateNow(){
 	// Authenticate
-	$auth = Auth::login(getenv(GAME_USERNAME),getenv(GAME_PASSWORD));
+	$auth = Auth::login(getenv("GAME_USERNAME"),getenv("GAME_PASSWORD"));
 	
 	$usernames = Config::FETCH_USERNAMES;
 	
