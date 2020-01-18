@@ -18,11 +18,11 @@ function updateNow(){
 	// Authenticate
 	$auth = Auth::login(getenv("GAME_USERNAME"),getenv("GAME_PASSWORD"));
 	
-	$usernames = Config::FETCH_USERNAMES;
+	$fetchData = Config::FETCH_DATA;
 	
 	$retData = array();
-	foreach($usernames as $username)
-		$retData[$username]= $auth->profile->stats->lookup($username);
+	foreach($fetchData as $userdata)
+		$retData[$userdata['displayName']]= $auth->profile->stats->lookup($userdata);
 	
 	/*echo '<pre>';
 	print_r($retData);
@@ -37,9 +37,9 @@ function updateNow(){
 	$points = array();
 	$currTime = time();
 	
-	foreach($usernames as $username){
+	foreach($fetchData as $userdata){
 		
-		$userData = $retData[$username];
+		$userData = $retData[$userdata['displayName']];
 		$platforms = array("ps4", "pc", "xb1");
 		$modes = array("solo", "duo", "squad");
 			
@@ -54,7 +54,7 @@ function updateNow(){
 				$points[] = new Point(
 					'stats', 
 					null,
-					['name' => $username,
+					['name' => $userdata['displayName'],
 					'mode' => $mode,
 					'platform' => $platform],
 
