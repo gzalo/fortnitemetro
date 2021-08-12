@@ -14,6 +14,8 @@ use Fortnite\NewsType;
 use Fortnite\Platform;
 use InfluxDB\Point;
 
+header('Access-Control-Allow-Origin: *');
+
 function updateNow(){
 	// Authenticate
 	$auth = Auth::login(getenv("GAME_USERNAME"),getenv("GAME_PASSWORD"));
@@ -93,6 +95,7 @@ function updateNow(){
 }
 
 function updateData(){
+	return;
 	$client = new InfluxDB\Client(Config::DB_HOST, Config::DB_PORT);
 	$database = $client->selectDB(Config::DB_NAME);		
 

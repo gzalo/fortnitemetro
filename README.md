@@ -1,7 +1,7 @@
 # fortnitemetro
 Fortnite statistic tracker - https://fortnite.gzalo.com/
 
-## Basic installation
+## Basic installation (outdated)
 - Run `php composer install` inside `app/`
 - Manually patch Tustin/fortnite-php to https://github.com/TimVerheul/fortnite-php
 - Define `GAME_USERNAME=...` and `GAME_PASSWORD=...` in .env
