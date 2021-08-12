@@ -427,12 +427,6 @@ if($action == 'update'){
 
 	die(updateData());
 
-}else if($action == 'getTip'){
-
-	$tips = explode("\n", file_get_contents('tips.txt'));
-	$tipId = array_rand($tips, 1);
-	die(json_encode(['id'=>$tipId, 'tip'=>$tips[$tipId]]));	
-
 }else if($action == 'drop'){
 
 	$client = new InfluxDB\Client(Config::DB_HOST, Config::DB_PORT);

@@ -264,19 +264,15 @@ $(document).ready(function () {
 });
 
 function loadMuaveTip() {
-  $.getJSON(
-    "https://fortnite.gzalo.com/api.php",
-    { action: "getTip" },
-    function (data) {
-      $("#muaveTip").html(
-        "<p><strong>MuaveTip #" +
-          data.id +
-          ' <a href="#" onclick="loadMuaveTip()">(pedir otro)</a>:</strong> ' +
-          data.tip +
-          "</p>"
-      );
-    }
-  );
+  $.getJSON("https://fortnite-tips.cgi-bin.workers.dev", function (data) {
+    $("#muaveTip").html(
+      "<p><strong>MuaveTip #" +
+        data.id +
+        ' <a href="#" onclick="loadMuaveTip()">(pedir otro)</a>:</strong> ' +
+        data.tip +
+        "</p>"
+    );
+  });
   return false;
 }
 loadMuaveTip();
