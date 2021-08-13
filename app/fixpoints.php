@@ -14,9 +14,9 @@ $startTime = time();
 $client = new InfluxDB\Client(Config::DB_HOST, Config::DB_PORT);
 $database = $client->selectDB(Config::DB_NAME);		
 
-//$result = $database->query('SELECT COUNT(*) from "stats" ');
+$result = $database->query('SELECT COUNT(*) from "stats" ');
 
-$result = $database->query('SELECT * from "stats" where time > now() - 120d order by time desc ');
+//$result = $database->query('SELECT * from "stats" where time > now() - 120d order by time desc ');
 
 //Removed 2511 of 2775 points in 183 seconds
 //Removed 15466 of 16167 points in 1339 seconds (10d)
@@ -34,6 +34,13 @@ $result = $database->query('SELECT * from "stats" where time > now() - 120d orde
 //320d
 
 echo '<pre>';
+
+$points = $result->getPoints();
+
+echo json_encode( $points, JSON_PRETTY_PRINT ) ;
+
+die("END");
+
 $serie = $result->getSeries()[0];
 
 $timePos = array_search("time", $serie['columns']);

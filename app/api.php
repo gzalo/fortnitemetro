@@ -2,7 +2,6 @@
 
 require_once 'vendor/autoload.php';
 require_once 'config.php';
-require_once 'utils.php';
 
 date_default_timezone_set('America/Argentina/Buenos_Aires'); 
 
@@ -317,9 +316,9 @@ function getData($range){
 						
 		}
 	}
-		
-	$dataLastUpdate = timeDiff(strtotime($cacheTime))  . " (". date("Y-m-d H:i:s", strtotime($cacheTime)) . ")";
-					
+	
+	$dataLastUpdate = date("Y-m-d H:i:s", strtotime($cacheTime));
+	
 	return json_encode(array(
 		"stats"=>array_values($rowData),   //Convert back to an integer indexed array
 		"dataLastUpdate" => $dataLastUpdate, 
