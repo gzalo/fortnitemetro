@@ -1,5 +1,6 @@
 const tipUrl = 'https://fortnite-tips.cgi-bin.workers.dev';
 const apiUri = 'https://fortnite.gzalo.com/api.php';
+const hourInMilliseconds = 3.6e6;
 
 // Find maximums of these columns
 const colsMax = ['matches_played_total', 'wins_total', 'kills_total', 'kdr_total', 'score_total', 'momentum', 'dmomentum'];
@@ -17,6 +18,19 @@ const categsPerUser = {
   Muselk: 0,
 };
 
+const userIds = {
+  'gzalo.com': 0,
+  NikAwEsOmE81: 1,
+  DeSartre: 2,
+  dadperez: 3,
+  Nachox86: 4,
+  SypherPK: 5,
+  ninja: 6,
+  Muselk: 7,
+  XulElan: 8,
+  L0VEMACHiNEtw: 9,
+};
+
 const titleTranslation = {
   matches_played_total: 'Partidas jugadas',
   wins_total: 'Partidas ganadas',
@@ -25,8 +39,11 @@ const titleTranslation = {
   score_total: 'Puntaje',
 };
 
+const modes = ['solo', 'squad', 'duo'];
+
 let data;
 let currentGraph = {};
+let db;
 
 const endDate = new Date();
 const day = 60 * 60 * 24 * 1000;
@@ -108,23 +125,93 @@ const showGraph = (e, cell) => {
 const updatePlot = () => {
   if (!currentGraph.field || !currentGraph.username) return;
 
+  // const stmt = db.prepare('SELECT count(*) FROM stats WHERE time BETWEEN $start AND $end');
+  // stmt.getAsObject({ $start: 1, $end: 1 });
+
   const range = document.getElementById('range').value;
   if (range == -1) return;
 
-  fetch(
-    `${apiUri}?` +
-      new URLSearchParams({
-        action: 'plot',
-        field: currentGraph.field,
-        username: currentGraph.username,
-        range: range,
-      }),
-  )
-    .then((resp) => resp.json())
-    .then((localData) => {
-      const title = `${titleTranslation[currentGraph.field]} de ${currentGraph.username}`;
-      Plotly.newPlot('plotDiv', localData, { title });
-    });
+  const fieldMapping = {
+    matches_played_total: 'played',
+    wins_total: 'wins',
+    kills_total: 'kills',
+    kdr_total: 'cast(kills as float)/cast(played as float)',
+  };
+
+  const now = Date.now();
+  const dbField = fieldMapping[currentGraph.field];
+  const $userId = userIds[currentGraph.username];
+  const $startTime = now - range * hourInMilliseconds;
+
+  let points, pointsPrev;
+
+  if (range != 0) {
+    points = db.exec(`SELECT time,${dbField},mode FROM stats WHERE username = $userId AND time BETWEEN $startTime and $end ORDER BY time ASC`, { $userId, $startTime, $endTime: now });
+    pointsPrev = db.exec(`SELECT time,${dbField},mode FROM stats WHERE username = $userId AND time < $startTime GROUP BY mode ORDER BY time ASC`, { $userId, $startTime });
+  } else {
+    points = db.exec(`SELECT time,${dbField},mode FROM stats WHERE username = $userId ORDER BY time ASC`, { $userId });
+    pointsPrev = [];
+  }
+
+  const data = {};
+
+  // Add the first point of each trace, modified to have the start time of the range
+  if (pointsPrev.length !== 0)
+    for (let i = 0; i < pointsPrev[0].values.length; i++) {
+      const point = pointsPrev[0].values[i];
+      let name = modes[point[2]];
+
+      if (!(name in data))
+        data[name] = {
+          x: [],
+          y: [],
+          type: 'scatter',
+          name: name,
+          mode: 'lines',
+          line: { shape: 'hv' },
+        };
+
+      data[name].x.push(new Date($startTime));
+      data[name].y.push(point[1]);
+    }
+
+  if (points.length !== 0)
+    for (let i = 0; i < points[0].values.length; i++) {
+      const point = points[0].values[i];
+      let name = modes[point[2]];
+      let time = point[0];
+
+      if (!(name in data))
+        data[name] = {
+          x: [],
+          y: [],
+          type: 'scatter',
+          name: name,
+          mode: 'lines',
+          line: { shape: 'hv' },
+        };
+
+      data[name].x.push(new Date(time));
+      data[name].y.push(point[1]);
+    }
+
+  //Replicate last point of the range with curent time
+
+  const plotData = [];
+  for (let name in data) {
+    //If there is at least one point for the data set, duplicate it at the end, with the current time
+    if (data[name].y.length != 0) {
+      let lastVal = data[name].y[data[name].y.length - 1];
+
+      data[name].x.push(new Date(now));
+      data[name].y.push(lastVal);
+    }
+
+    plotData.push(data[name]);
+  }
+
+  const title = `${titleTranslation[currentGraph.field]} de ${currentGraph.username}`;
+  Plotly.newPlot('plotDiv', plotData, { title });
 };
 
 const initTable = () => {
@@ -203,7 +290,7 @@ const updateTable = () => {
       loader.classList.add('hide');
       loader.classList.remove('show');
       statsTable.setData(data.stats);
-      document.getElementById('lastUpdate').innerHTML = `Última actualización: ${data.dataLastUpdate} | ${data.lastChanges}`;
+      document.getElementById('lastUpdate').innerHTML = `Última actualización: ${data.dataLastUpdate}`;
     });
 };
 
@@ -238,101 +325,8 @@ const sqlPromise = initSqlJs({ locateFile: (file) => `https://cdnjs.cloudflare.c
 const dataPromise = fetch('db.sqlite3').then((res) => res.arrayBuffer());
 
 Promise.all([sqlPromise, dataPromise]).then(([SQL, buf]) => {
-  const db = new SQL.Database(new Uint8Array(buf));
-  console.log(JSON.stringify(db.exec('select count(*) from stats where username = 0')));
-
-  // const stmt = db.prepare('SELECT count(*) FROM stats WHERE time BETWEEN $start AND $end');
-  // stmt.getAsObject({ $start: 1, $end: 1 });
+  db = new SQL.Database(new Uint8Array(buf));
 });
-
-/*
-
-
-function getPlot($field, $username, $range){
-	if(!is_numeric($range) || $range < 0)
-		die("Range must be numeric and non-negative");
-
-	$client = new InfluxDB\Client(Config::DB_HOST, Config::DB_PORT);
-	$database = $client->selectDB(Config::DB_NAME);		
-	
-	switch($field){
-		case 'matches_played_total':
-			$field = "matches_played";
-			break;
-		case 'wins_total':
-			$field = "wins";
-			break;
-		case 'kills_total':
-			$field = "kills";
-			break;
-		case 'kdr_total':
-			$field = "kill_death_per_game";
-			break;
-		case 'score_total':
-			$field = "score";
-			break;
-			
-		default:exit();
-	}
-			
-	if($range == 0){
-		$rangeQuery = ' 1=1 ';
-		$rangeQueryPrev = ' 0=1 '; //No points before start
-	}else{
-		$rangeQuery = ' time > NOW() - '.$range.'h ';
-		$rangeQueryPrev = ' time < NOW() - '.$range.'h ';
-	}
-			
-	//Fetch points in between range and current time
-	$result = $database->query('SELECT '.$field.', mode,platform FROM "stats" WHERE "name" = \''.$username.'\' AND '.$rangeQuery.' GROUP BY mode,platform ORDER BY time ASC');
-	$points = $result->getPoints();
-
-	//Fetch the first point previous to the start of the range
-	$result = $database->query('SELECT '.$field.', mode,platform FROM "stats" WHERE "name" = \''.$username.'\' AND '.$rangeQueryPrev.' GROUP BY mode,platform ORDER BY time DESC LIMIT 1');
-	$pointsPrev = $result->getPoints();
-	
-	$out = array();
-
-	// Add the first point of each trace, modified to have the start time of the range
-	$startTime = date("Y-m-d H:i:s", time()-$range*3600);
-	foreach($pointsPrev as $point){
-		$name = $point['mode']."_".$point['platform'];
-
-		if(!isset($out[$name]))
-			$out[$name] = array("x"=>array(), "y"=>array(), "type"=>"scatter", "name"=>$name, "mode"=>"lines", "line" => ["shape"=>"hv"] );
-		
-		$out[$name]['x'][] = $startTime;
-		$out[$name]['y'][] = $point[$field];
-	}
-
-	foreach($points as $point){
-		$name = $point['mode']."_".$point['platform'];
-
-		if(!isset($out[$name]))
-			$out[$name] = array("x"=>array(), "y"=>array(), "type"=>"scatter", "name"=>$name, "mode"=>"lines", "line" => ["shape"=>"hv"] );
-		
-		$time = date("Y-m-d H:i:s", strtotime($point['time']));
-		$out[$name]['x'][] = $time;
-		$out[$name]['y'][] = $point[$field];
-	}
-	
-	//Replicate last point of the range with curent time
-	$currTime = date("Y-m-d H:i:s", time());
-
-	foreach($out as $name=>&$data){
-		//If there is at least one point for the data set, duplicate it at the end, with the current time
-		if(count($data['y']) != 0){
-			$val = $data['y'][count($data['y'])-1];
-
-			$out[$name]['x'][] = $currTime;
-			$out[$name]['y'][] = $val;
-
-		}
-	}
-
-	return json_encode(array_values($out));
-}
-*/
 
 /*
 

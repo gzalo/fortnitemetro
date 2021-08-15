@@ -24,6 +24,9 @@ def create_table(con):
     create_index_sql = "CREATE INDEX index_stats_mode ON stats(mode)"
     con.execute(create_index_sql)
 
+    update_sequence_sql = "INSERT INTO sqlite_sequence (name,seq) values('stats', 1)"
+    con.execute(update_sequence_sql)
+
 
 def get_rows(filename, username_id):
     data = json.load(open(filename))
@@ -38,7 +41,11 @@ def get_rows(filename, username_id):
         played = row['matches_played']
         wins = row['wins']
         kills = row['kills']
+
         if row['platform'] == 'xb1':
+            continue
+
+        if row['kills'] == 0 and username == 6:  # Ninja has a few bugged rows
             continue
 
         importantRows = (played, wins, kills)
@@ -84,7 +91,10 @@ usernames = ["gzalo.com",
 
 db_filename = 'db.sqlite3'
 
-os.remove(db_filename)
+try:
+    os.remove(db_filename)
+except OSError:
+    pass
 
 con = sqlite3.connect(db_filename)
 cur = con.cursor()
