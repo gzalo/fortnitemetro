@@ -2,9 +2,9 @@ const hourInMilliseconds = 3.6e6;
 
 const modes = ['solo', 'squad', 'duo'];
 const currentGraph = { field: null, userId: null };
+const db = [];
 
 let data;
-let db;
 
 const endDate = new Date();
 const day = 60 * 60 * 24 * 1000;
@@ -97,16 +97,15 @@ const updatePlot = (field, userId) => {
 
   const now = Date.now();
   const dbField = fieldMapping[field];
-  const $userId = userId;
   const $startTime = now - range * hourInMilliseconds;
 
   let points, pointsPrev;
 
   if (range != 0) {
-    points = db.exec(`SELECT time,${dbField},mode FROM stats WHERE username = $userId AND time BETWEEN $startTime and $end ORDER BY time ASC`, { $userId, $startTime, $endTime: now });
-    pointsPrev = db.exec(`SELECT time,${dbField},mode FROM stats WHERE username = $userId AND time < $startTime GROUP BY mode ORDER BY time DESC`, { $userId, $startTime });
+    points = db[userId].exec(`SELECT time,${dbField},mode FROM stats WHERE time BETWEEN $startTime AND $end ORDER BY time ASC`, { $startTime, $endTime: now });
+    pointsPrev = db[userId].exec(`SELECT time,${dbField},mode FROM stats WHERE time < $startTime GROUP BY mode ORDER BY time DESC`, { $startTime });
   } else {
-    points = db.exec(`SELECT time,${dbField},mode FROM stats WHERE username = $userId ORDER BY time ASC`, { $userId });
+    points = db[userId].exec(`SELECT time,${dbField},mode FROM stats ORDER BY time ASC`);
     pointsPrev = [];
   }
 
@@ -183,32 +182,30 @@ const getPlayerHistoricInfo = (range) => {
   const now = Date.now();
   const $startTime = now - range * hourInMilliseconds;
 
-  let points;
+  let query;
   if (range == 0) {
     //Time = 0 => current data
-    points = db.exec('SELECT time,username,mode,played,wins,kills from stats where time in (select max(time) from stats group by username,mode)');
+    //query = 'SELECT time,mode,played,wins,kills from stats where time in (select max(time) from stats group by mode)';
+    query = 'SELECT time,mode,played,wins,kills from stats where time in (select max(time) from stats where mode = 0) or time in (select max(time) from stats where mode = 1) or time in (select max(time) from stats where mode = 2)';
   } else {
     // Get older data
-    points = db.exec('SELECT time,username,mode,played,wins,kills from stats where time in (select max(time) from stats where time < $startTime group by username,mode)', { $startTime });
+    // query = 'SELECT time,mode,played,wins,kills from stats where time in (select max(time) from stats where time < $startTime group by mode)';
+    query = 'SELECT time,mode,played,wins,kills from stats where time in (select max(time) from stats where time < $startTime and mode = 0) or time in (select max(time) from stats where time < $startTime and mode = 1) or time in (select max(time) from stats where time < $startTime and mode = 2)';
   }
 
   const playerInfo = {};
+  for (let i = 0; i < db.length; i++) {
+    const points = db[i].exec(query, { $startTime });
 
-  if (points.length !== 0)
-    for (let i = 0; i < points[0].values.length; i++) {
-      const point = points[0].values[i];
+    if (points.length !== 0)
+      for (let p = 0; p < points[0].values.length; p++) {
+        const point = points[0].values[p];
 
-      const userId = point[1];
+        if (!(i in playerInfo)) playerInfo[i] = {};
 
-      if (!(userId in playerInfo)) playerInfo[userId] = {};
-
-      const fullName = point[2];
-      playerInfo[userId][fullName] = {};
-
-      playerInfo[userId][fullName].played = point[3];
-      playerInfo[userId][fullName].wins = point[4];
-      playerInfo[userId][fullName].kills = point[5];
-    }
+        playerInfo[i][point[1]] = { played: point[2], wins: point[3], kills: point[4] };
+      }
+  }
 
   const rowData = {};
   let idx = 0;
@@ -426,10 +423,16 @@ const loadMuaveTip = () => {
 };
 
 const sqlPromise = initSqlJs({ locateFile: (file) => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.5.0/${file}` });
-const dataPromise = fetch('db.sqlite3').then((res) => res.arrayBuffer());
+const dataPromise = [];
 
-Promise.all([sqlPromise, dataPromise]).then(([SQL, buf]) => {
-  db = new SQL.Database(new Uint8Array(buf));
+for (let i = 0; i < 10; i++) {
+  dataPromise.push(fetch(`data/db_${i}.sqlite3`).then((res) => res.arrayBuffer()));
+}
+
+Promise.all([sqlPromise, ...dataPromise]).then(([SQL, ...buf]) => {
+  for (let i = 0; i < buf.length; i++) {
+    db.push(new SQL.Database(new Uint8Array(buf[i])));
+  }
   initTable();
   updateTable();
   loadMuaveTip();

@@ -9,7 +9,6 @@ def create_table(con):
     create_stats_sql = """
     CREATE TABLE stats (
         time INTEGER PRIMARY KEY AUTOINCREMENT,
-        username INTEGER NOT NULL,
         mode INTEGER NOT NULL,
         played INTEGER NOT NULL,
         wins INTEGER NOT NULL,
@@ -18,10 +17,10 @@ def create_table(con):
 
     con.execute(create_stats_sql)
 
-    create_index_sql = "CREATE INDEX index_stats_username ON stats(username)"
+    create_index_sql = "CREATE INDEX index_stats_mode ON stats(mode)"
     con.execute(create_index_sql)
 
-    create_index_sql = "CREATE INDEX index_stats_mode ON stats(mode)"
+    create_index_sql = "CREATE INDEX index_stats_time_mode ON stats(time,mode)"
     con.execute(create_index_sql)
 
     update_sequence_sql = "INSERT INTO sqlite_sequence (name,seq) values('stats', 1)"
@@ -35,7 +34,6 @@ def get_rows(filename, username_id):
     lastForMode = {'solo': None, 'squad': None, 'duo': None}
     for row in data:
         time = int(dp.parse(row['time']).timestamp())*1000
-        username = username_id
         mode = row['mode']
         modeId = modes[mode]
         played = row['matches_played']
@@ -45,13 +43,13 @@ def get_rows(filename, username_id):
         if row['platform'] == 'xb1':
             continue
 
-        if row['kills'] == 0 and username == 6:  # Ninja has a few bugged rows
+        if row['kills'] == 0 and username_id == 6:  # Ninja has a few bugged rows
             continue
 
         importantRows = (played, wins, kills)
 
         if lastForMode[mode] != importantRows:
-            outRows.append((time, username, modeId, played, wins, kills))
+            outRows.append((time, modeId, played, wins, kills))
             lastForMode[mode] = importantRows
 
     return outRows
@@ -59,7 +57,7 @@ def get_rows(filename, username_id):
 
 def insert_data(cur, data):
     cur.executemany(
-        "insert into stats(time, username, mode, played, wins, kills) values (MAX(?, (SELECT seq FROM sqlite_sequence) + 1),?,?,?,?,?)", data)
+        "insert into stats(time, mode, played, wins, kills) values (MAX(?, (SELECT seq FROM sqlite_sequence) + 1),?,?,?,?)", data)
 
 
 def show_all(cur):
@@ -89,27 +87,24 @@ usernames = ["gzalo.com",
              "XulElan",
              "L0VEMACHiNEtw"]
 
-db_filename = 'db.sqlite3'
-
-try:
-    os.remove(db_filename)
-except OSError:
-    pass
-
-con = sqlite3.connect(db_filename)
-cur = con.cursor()
-
-create_table(cur)
-
-all_data = []
 for i in range(0, len(usernames)):
-    all_data += get_rows("dump/"+usernames[i] + ".json", i)
+    db_filename = 'out/db_'+str(i)+'.sqlite3'
 
-sorted_data = sorted(all_data, key=itemgetter(0))
+    try:
+        os.remove(db_filename)
+    except OSError:
+        pass
 
-insert_data(cur, sorted_data)
+    con = sqlite3.connect(db_filename)
+    cur = con.cursor()
+
+    create_table(cur)
+
+    data = get_rows("dump/"+usernames[i] + ".json", i)
+    insert_data(cur, data)
+
+    con.commit()
+    con.close()
+
 # show_all(cur)
 # show_latest(cur)
-
-con.commit()
-con.close()
