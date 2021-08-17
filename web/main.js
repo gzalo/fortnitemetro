@@ -1,22 +1,10 @@
 const tipUrl = 'https://fortnite-tips.cgi-bin.workers.dev';
-const apiUri = 'https://fortnite.gzalo.com/api.php';
 const hourInMilliseconds = 3.6e6;
 
 // Find maximums of these columns
-const colsMax = ['matches_played_total', 'wins_total', 'kills_total', 'kdr_total', 'score_total', 'momentum', 'dmomentum'];
+const colsMax = ['matches_played_total', 'wins_total', 'kills_total', 'kdr_total', 'momentum', 'dmomentum'];
 const categories = ['Malísimos', 'Mejores jugadores'];
-const categsPerUser = {
-  'gzalo.com': 1,
-  NikAwEsOmE81: 1,
-  DeSartre: 1,
-  dadperez: 1,
-  Nachox86: 1,
-  XulElan: 1,
-  L0VEMACHiNEtw: 1,
-  SypherPK: 0,
-  ninja: 0,
-  Muselk: 0,
-};
+const categsPerUser = [1, 1, 1, 1, 1, 0, 0, 0, 1, 1];
 
 const userIds = {
   'gzalo.com': 0,
@@ -31,18 +19,19 @@ const userIds = {
   L0VEMACHiNEtw: 9,
 };
 
+const userNamesPerId = ['gzalo.com', 'NikAwEsOmE81', 'DeSartre', 'dadperez', 'Nachox86', 'SypherPK', 'ninja', 'Muselk', 'XulElan', 'L0VEMACHiNEtw'];
+
 const titleTranslation = {
   matches_played_total: 'Partidas jugadas',
   wins_total: 'Partidas ganadas',
   kills_total: 'Asesinatos',
   kdr_total: 'A/M',
-  score_total: 'Puntaje',
 };
 
 const modes = ['solo', 'squad', 'duo'];
+const currentGraph = { field: null, username: null };
 
 let data;
-let currentGraph = {};
 let db;
 
 const endDate = new Date();
@@ -86,7 +75,7 @@ const printCellInfo = (cell, formatterParams) => {
       break;
   }
 
-  if (typeof data.stats[idx][fieldName + '_old'] != 'undefined' && fieldName != 'score_total' && fieldName != 'dmomentum') {
+  if (typeof data.stats[idx][fieldName + '_old'] != 'undefined' && fieldName != 'dmomentum') {
     const oldValue = data.stats[idx][fieldName + '_old'];
     const useAbs = fieldName === 'kdr_total' ? false : true;
 
@@ -116,17 +105,13 @@ const printCellInfo = (cell, formatterParams) => {
 };
 
 const showGraph = (e, cell) => {
-  const field = cell.getColumn().getField();
-  const username = cell.getRow().getData().name;
-  currentGraph = { field, username };
-  updatePlot();
+  currentGraph.field = cell.getColumn().getField();
+  currentGraph.username = cell.getRow().getData().name;
+  updatePlot(currentGraph.field, currentGraph.username);
 };
 
-const updatePlot = () => {
-  if (!currentGraph.field || !currentGraph.username) return;
-
-  // const stmt = db.prepare('SELECT count(*) FROM stats WHERE time BETWEEN $start AND $end');
-  // stmt.getAsObject({ $start: 1, $end: 1 });
+const updatePlot = (field, username) => {
+  if (!field || !username) return;
 
   const range = document.getElementById('range').value;
   if (range == -1) return;
@@ -139,15 +124,15 @@ const updatePlot = () => {
   };
 
   const now = Date.now();
-  const dbField = fieldMapping[currentGraph.field];
-  const $userId = userIds[currentGraph.username];
+  const dbField = fieldMapping[field];
+  const $userId = userIds[username];
   const $startTime = now - range * hourInMilliseconds;
 
   let points, pointsPrev;
 
   if (range != 0) {
     points = db.exec(`SELECT time,${dbField},mode FROM stats WHERE username = $userId AND time BETWEEN $startTime and $end ORDER BY time ASC`, { $userId, $startTime, $endTime: now });
-    pointsPrev = db.exec(`SELECT time,${dbField},mode FROM stats WHERE username = $userId AND time < $startTime GROUP BY mode ORDER BY time ASC`, { $userId, $startTime });
+    pointsPrev = db.exec(`SELECT time,${dbField},mode FROM stats WHERE username = $userId AND time < $startTime GROUP BY mode ORDER BY time DESC`, { $userId, $startTime });
   } else {
     points = db.exec(`SELECT time,${dbField},mode FROM stats WHERE username = $userId ORDER BY time ASC`, { $userId });
     pointsPrev = [];
@@ -210,8 +195,87 @@ const updatePlot = () => {
     plotData.push(data[name]);
   }
 
-  const title = `${titleTranslation[currentGraph.field]} de ${currentGraph.username}`;
+  const title = `${titleTranslation[field]} de ${username}`;
   Plotly.newPlot('plotDiv', plotData, { title });
+};
+
+const getPlayerHistoricInfo = (range) => {
+  const now = Date.now();
+  const $startTime = now - range * hourInMilliseconds;
+
+  let points;
+  if (range == 0) {
+    //Time = 0 => current data
+    points = db.exec('SELECT time,username,mode,played,wins,kills from stats where time in (select max(time) from stats group by username,mode)');
+  } else {
+    // Get older data
+    points = db.exec('SELECT time,username,mode,played,wins,kills from stats where time in (select max(time) from stats where time < $startTime group by username,mode)', { $startTime });
+  }
+
+  const playerInfo = {};
+
+  if (points.length !== 0)
+    for (let i = 0; i < points[0].values.length; i++) {
+      const point = points[0].values[i];
+
+      const username = point[1];
+
+      if (!(username in playerInfo)) playerInfo[username] = {};
+
+      const fullName = point[2];
+      playerInfo[username][fullName] = {};
+
+      playerInfo[username][fullName].played = point[3];
+      playerInfo[username][fullName].wins = point[4];
+      playerInfo[username][fullName].kills = point[5];
+    }
+
+  const rowData = {};
+  let idx = 0;
+  for (userName in playerInfo) {
+    let matches_played_total = 0;
+    let wins_total = 0;
+    let kills_total = 0;
+    let kdr_total = 0;
+
+    let matches_played_text = '';
+    let wins_text = '';
+    let kills_text = '';
+    let kdr_text = '';
+
+    for (mode in playerInfo[userName]) {
+      const modeData = playerInfo[userName][mode];
+
+      matches_played_total += modeData.played;
+      matches_played_text += mode + ': ' + modeData.played + '\n';
+
+      wins_total += modeData.wins;
+      wins_text += mode + ': ' + modeData.wins + '\n';
+
+      kills_total += modeData.kills;
+      kills_text += mode + ': ' + modeData.kills + '\n';
+
+      kdr_text += mode + ': ' + Math.round((modeData.kills / modeData.played) * 1000) / 1000 + '\n';
+    }
+
+    kdr_total = kills_total / (matches_played_total - wins_total);
+    kdr_total = Math.round(kdr_total * 1000) / 1000;
+
+    rowData[userName] = {
+      id: idx++,
+      name: userNamesPerId[userName],
+      matches_played_total: matches_played_total,
+      matches_played: matches_played_text,
+      wins_total: wins_total,
+      wins: wins_text,
+      kills_total: kills_total,
+      kills: kills_text,
+      kdr_total: kdr_total,
+      kdr: kdr_text,
+      categ: categories[categsPerUser[userName]],
+    };
+  }
+  return rowData;
 };
 
 const initTable = () => {
@@ -269,8 +333,6 @@ const initTable = () => {
           return data.stats[idx].kills;
         case 'kdr_total':
           return data.stats[idx].kdr;
-        case 'score_total':
-          return data.stats[idx].score;
         default:
           return '';
       }
@@ -278,20 +340,88 @@ const initTable = () => {
   });
 };
 
+const getTableData = (range) => {
+  let rowDataOld = {},
+    rowDataOlder = {};
+  if (range != 0) {
+    rowDataOld = getPlayerHistoricInfo(range);
+    rowDataOlder = getPlayerHistoricInfo(range * 2);
+  }
+
+  const rowData = getPlayerHistoricInfo(0);
+  for (rowIdx in rowData) {
+    const stat = rowData[rowIdx];
+    stat.momentum = 0;
+    stat.dmomentum = 0;
+    stat.momentum_old = 0;
+
+    if (range != 0 && rowIdx in rowDataOld) {
+      const statOld = rowDataOld[rowIdx];
+      denum = stat.matches_played_total - statOld.matches_played_total - (stat.wins_total - statOld.wins_total);
+      momentum = stat.kills_total - statOld.kills_total;
+
+      if (denum != 0) momentum = Math.round((momentum / denum) * 1000) / 1000;
+      else momentum = 0;
+
+      stat.momentum = momentum;
+
+      if (rowIdx in rowDataOlder) {
+        const statOlder = rowDataOlder[rowIdx];
+
+        oldDenum = statOld.matches_played_total - statOlder.matches_played_total - (statOld.wins_total - statOlder.wins_total);
+        oldMomentum = statOld.kills_total - statOlder.kills_total;
+
+        if (oldDenum != 0) oldMomentum = Math.round((oldMomentum / oldDenum) * 1000) / 1000;
+        else oldMomentum = 0;
+
+        stat.momentum_old = oldMomentum;
+        stat.dmomentum = Math.round(((24 * (momentum - oldMomentum)) / range) * 1000) / 1000;
+      }
+    }
+  }
+
+  for (colIdx = 0; colIdx < colsMax.length; colIdx++) {
+    max = 0;
+    min = 999999;
+    for (rowIdx in rowData) {
+      let textAsFloat = parseFloat(rowData[rowIdx][colsMax[colIdx]]);
+      if (textAsFloat > max) max = textAsFloat;
+      if (textAsFloat < min) min = textAsFloat;
+    }
+    for (rowIdx in rowData) {
+      let textAsFloat = parseFloat(rowData[rowIdx][colsMax[colIdx]]);
+
+      if (textAsFloat == max) rowData[rowIdx][colsMax[colIdx] + '_color'] = 'max';
+      if (textAsFloat == min) rowData[rowIdx][colsMax[colIdx] + '_color'] = 'min';
+
+      // Only include old data if range is not zero
+      if (range != 0 && rowIdx in rowDataOld && colsMax[colIdx] != 'momentum') rowData[rowIdx][colsMax[colIdx] + '_old'] = rowDataOld[rowIdx][colsMax[colIdx]];
+    }
+  }
+
+  const stats = [];
+  for (rowIdx in rowData) {
+    stats.push(rowData[rowIdx]);
+  }
+
+  return { stats };
+};
+
 const updateTable = () => {
   const range = document.getElementById('range').value;
   if (range == -1) return;
 
-  fetch(`${apiUri}?` + new URLSearchParams({ action: 'get', range: range }))
-    .then((resp) => resp.json())
-    .then((localData) => {
-      data = localData;
-      const loader = document.getElementById('loader');
-      loader.classList.add('hide');
-      loader.classList.remove('show');
-      statsTable.setData(data.stats);
-      document.getElementById('lastUpdate').innerHTML = `Última actualización: ${data.dataLastUpdate}`;
-    });
+  data = getTableData(range);
+  const loader = document.getElementById('loader');
+  loader.classList.add('hide');
+  loader.classList.remove('show');
+  statsTable.setData(data.stats);
+
+  if (db) {
+    const lastUpdate = db.exec(`SELECT time FROM stats ORDER BY time DESC LIMIT 1`)[0].values[0][0];
+    const lastUpdateDate = new Date(lastUpdate).toLocaleString('es-ES');
+    document.getElementById('lastUpdate').innerHTML = `Última actualización: ${lastUpdateDate}`;
+  }
 };
 
 document.querySelectorAll('#range, #timeStart, #timeEnd').forEach((item) => {
@@ -304,12 +434,9 @@ document.querySelectorAll('#range, #timeStart, #timeEnd').forEach((item) => {
       document.getElementById('timeSelector').style.display = 'none';
     }
     updateTable();
-    updatePlot();
+    updatePlot(currentGraph.field, currentGraph.username);
   });
 });
-
-initTable();
-updateTable();
 
 const loadMuaveTip = () => {
   fetch(tipUrl)
@@ -319,209 +446,13 @@ const loadMuaveTip = () => {
     });
   return false;
 };
-loadMuaveTip();
 
 const sqlPromise = initSqlJs({ locateFile: (file) => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.5.0/${file}` });
 const dataPromise = fetch('db.sqlite3').then((res) => res.arrayBuffer());
 
 Promise.all([sqlPromise, dataPromise]).then(([SQL, buf]) => {
   db = new SQL.Database(new Uint8Array(buf));
+  initTable();
+  updateTable();
+  loadMuaveTip();
 });
-
-/*
-
-function getPlayerHistoricInfo($database, $time, &$cacheTime){
-	if(!is_numeric($time))
-		$time = 0;
-	
-	if($time == 0){ //Time = 0 => current data
-		$query = 'SELECT * from "stats" group by * order by time desc limit 1 ';
-	}else{
-		// Get older data
-		$query = 'SELECT * from "stats" where time < NOW() - '.$time.'h group by * order by time desc limit 1 ';
-	}
-
-	$result = $database->query($query);
-	$series = $result->getSeries();
-	
-	$playerInfo = array();
-	
-	foreach($series as $serie){
-		$username = $serie['tags']['name'];
-
-		//Ignore certain usernames to avoid bugs
-		if(in_array($username, Config::IGNORE_USERNAMES)) 
-			continue;
-		
-		if(!isset($playerInfo[$username]))
-			$playerInfo[$username] = array();
-		
-		$fullName = $serie['tags']['mode']."_".$serie['tags']['platform'];
-		$playerInfo[$username][$fullName] = array();
-		
-		foreach($serie['columns'] as $colIdx=>$colName){
-			$playerInfo[$username][$fullName][$colName] = $serie['values'][0][$colIdx];
-		}
-		
-	}
-	
-	ksort($playerInfo);
-	
-	$rowData = array();
-	foreach($playerInfo as $userName=>$userData){
-		
-		$matches_played_total = 0;
-		$wins_total = 0;
-		$kills_total = 0;
-		$kdr_total = 0;
-		$score_total = 0;
-		
-		$matches_played_text = "";
-		$wins_text = "";
-		$kills_text = "";
-		$kdr_text = "";
-		$score_text = "";
-	  
-		foreach($userData as $mode=>$modeData){
-			$cacheTime = max($cacheTime, $modeData['time']);
-			$matches_played_total += $modeData['matches_played'];
-			$matches_played_text .= $mode. ": " . $modeData['matches_played'] . "\n";
-
-			$wins_total += $modeData['wins'];
-			$wins_text .= $mode. ": " . $modeData['wins'] . "\n";
-
-			$kills_total += $modeData['kills'];
-			$kills_text .= $mode. ": " . $modeData['kills'] . "\n";
-
-			$kdr_text .= $mode. ": " . $modeData['kill_death_per_game'] . "\n";
-			
-			$score_total += $modeData['score'];
-			$score_text .= $mode. ": " . $modeData['score'] . "\n";
-			
-		}
-		$kdr_total = $kills_total / ($matches_played_total - $wins_total);
-		$kdr_total = round($kdr_total,3);
-		
-		  $rowData[$userName] = array(
-			"id" => count($rowData),
-			'name'=>$userName,
-			"matches_played_total"=>$matches_played_total, 
-			"matches_played"=>$matches_played_text,
-			"wins_total"=>$wins_total,
-			"wins"=>$wins_text,
-			"kills_total"=>$kills_total,
-			"kills"=>$kills_text,
-			"kdr_total"=>$kdr_total,
-			"kdr"=>$kdr_text,
-			"score_total"=>$score_total,
-			"score"=>$score_text,
-			"categ"=>Config::CATEG_NAMES[Config::CATEG_USERS[$userName]],
-		);
-
-	}
-	return $rowData;
-}
-*/
-
-/*
-
-function getData($range){
-
-	if(!is_numeric($range) || $range < 0)
-	die("Range must be numeric and non-negative");
-
-	$client = new InfluxDB\Client(Config::DB_HOST, Config::DB_PORT);
-	$database = $client->selectDB(Config::DB_NAME);		
-	
-	$cacheTime = 0;
-	
-	if($range != 0){
-		$rowDataOld = getPlayerHistoricInfo($database, $range, $cacheTime);
-		$rowDataOlder = getPlayerHistoricInfo($database, $range*2, $cacheTime);
-	}
-	
-	$rowData = getPlayerHistoricInfo($database, 0, $cacheTime);
-
-	//Find maximum of specified columns
-	$colsMax = Config::COLS_STATS_COLOR;
-	
-	foreach($rowData as $rowIdx=>$row){
-		$rowData[$rowIdx]["momentum"] = 0;
-		$rowData[$rowIdx]["dmomentum"] = 0;
-		$rowData[$rowIdx]["momentum_old"] = 0;
-		
-		if($range != 0 && isset($rowDataOld[$rowIdx])){
-			$denum = ($rowData[$rowIdx]['matches_played_total'] - $rowDataOld[$rowIdx]['matches_played_total'] - ($rowData[$rowIdx]['wins_total'] - $rowDataOld[$rowIdx]['wins_total']));
-			$momentum = $rowData[$rowIdx]['kills_total'] - $rowDataOld[$rowIdx]['kills_total'];
-			
-			if($denum != 0)
-				$momentum = round($momentum/$denum,3);
-			else
-				$momentum = 0;
-				
-			
-			$rowData[$rowIdx]["momentum"] = $momentum;
-			
-			if(isset($rowDataOlder[$rowIdx])){
-				
-				$oldDenum = ($rowDataOld[$rowIdx]['matches_played_total'] - $rowDataOlder[$rowIdx]['matches_played_total'] - ($rowDataOld[$rowIdx]['wins_total'] - $rowDataOlder[$rowIdx]['wins_total']));
-				$oldMomentum = $rowDataOld[$rowIdx]['kills_total'] - $rowDataOlder[$rowIdx]['kills_total'];
-					
-				if($oldDenum != 0)
-					$oldMomentum = round($oldMomentum/$oldDenum,3);
-				else
-					$oldMomentum = 0;
-				
-				
-				$rowData[$rowIdx]["momentum_old"] = $oldMomentum;
-				
-				$rowData[$rowIdx]["dmomentum"] = round(24*($momentum-$oldMomentum)/$range, 3);
-			}
-			
-		}
-	}
-	
-	for($colIdx=0;$colIdx<count($colsMax);$colIdx++){
-		$max = 0;
-		$min = 999999;
-		foreach($rowData as $rowIdx=>$row){
-			if(in_array($row['name'], Config::IGNORE_STATS_COLOR))
-				continue;
-			
-			$textAsFloat = (float)$row[$colsMax[$colIdx]];
-			if($textAsFloat > $max)
-				$max = $textAsFloat;
-			if($textAsFloat < $min)
-				$min = $textAsFloat;
-			
-		}
-		foreach($rowData as $rowIdx=>$row){
-			$textAsFloat = (float)$row[$colsMax[$colIdx]];
-			
-			if(in_array($row['name'], Config::IGNORE_STATS_COLOR))
-				$rowData[$rowIdx][$colsMax[$colIdx]."_color"] = "out";
-			
-			if($textAsFloat == $max)
-				$rowData[$rowIdx][$colsMax[$colIdx]."_color"] = "max";
-			if($textAsFloat == $min)
-				$rowData[$rowIdx][$colsMax[$colIdx]."_color"] = "min";
-			
-			
-			// Only include old data if range is not zero
-			if($range != 0 && isset($rowDataOld[$rowIdx]) && $colsMax[$colIdx] != 'momentum')
-				$rowData[$rowIdx][$colsMax[$colIdx]."_old"] = $rowDataOld[$rowIdx][$colsMax[$colIdx]];
-			
-						
-		}
-	}
-	
-	$dataLastUpdate = date("Y-m-d H:i:s", strtotime($cacheTime));
-	
-	return json_encode(array(
-		"stats"=>array_values($rowData),   //Convert back to an integer indexed array
-		"dataLastUpdate" => $dataLastUpdate, 
-		"lastChanges"=>	getExtraInfo()
-	));
-		
-}
-	*/
