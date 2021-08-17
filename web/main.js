@@ -1,35 +1,7 @@
-const tipUrl = 'https://fortnite-tips.cgi-bin.workers.dev';
 const hourInMilliseconds = 3.6e6;
 
-// Find maximums of these columns
-const colsMax = ['matches_played_total', 'wins_total', 'kills_total', 'kdr_total', 'momentum', 'dmomentum'];
-const categories = ['Malísimos', 'Mejores jugadores'];
-const categsPerUser = [1, 1, 1, 1, 1, 0, 0, 0, 1, 1];
-
-const userIds = {
-  'gzalo.com': 0,
-  NikAwEsOmE81: 1,
-  DeSartre: 2,
-  dadperez: 3,
-  Nachox86: 4,
-  SypherPK: 5,
-  ninja: 6,
-  Muselk: 7,
-  XulElan: 8,
-  L0VEMACHiNEtw: 9,
-};
-
-const userNamesPerId = ['gzalo.com', 'NikAwEsOmE81', 'DeSartre', 'dadperez', 'Nachox86', 'SypherPK', 'ninja', 'Muselk', 'XulElan', 'L0VEMACHiNEtw'];
-
-const titleTranslation = {
-  matches_played_total: 'Partidas jugadas',
-  wins_total: 'Partidas ganadas',
-  kills_total: 'Asesinatos',
-  kdr_total: 'A/M',
-};
-
 const modes = ['solo', 'squad', 'duo'];
-const currentGraph = { field: null, username: null };
+const currentGraph = { field: null, userId: null };
 
 let data;
 let db;
@@ -106,12 +78,12 @@ const printCellInfo = (cell, formatterParams) => {
 
 const showGraph = (e, cell) => {
   currentGraph.field = cell.getColumn().getField();
-  currentGraph.username = cell.getRow().getData().name;
-  updatePlot(currentGraph.field, currentGraph.username);
+  currentGraph.userId = cell.getRow().getData().id;
+  updatePlot(currentGraph.field, currentGraph.userId);
 };
 
-const updatePlot = (field, username) => {
-  if (!field || !username) return;
+const updatePlot = (field, userId) => {
+  if (field === null || userId === null) return;
 
   const range = document.getElementById('range').value;
   if (range == -1) return;
@@ -125,7 +97,7 @@ const updatePlot = (field, username) => {
 
   const now = Date.now();
   const dbField = fieldMapping[field];
-  const $userId = userIds[username];
+  const $userId = userId;
   const $startTime = now - range * hourInMilliseconds;
 
   let points, pointsPrev;
@@ -195,7 +167,15 @@ const updatePlot = (field, username) => {
     plotData.push(data[name]);
   }
 
-  const title = `${titleTranslation[field]} de ${username}`;
+  const titleTranslation = {
+    matches_played_total: 'Partidas jugadas',
+    wins_total: 'Partidas ganadas',
+    kills_total: 'Asesinatos',
+    kdr_total: 'A/M',
+  };
+
+  const userName = dataset[userId].name;
+  const title = `${titleTranslation[field]} de ${userName}`;
   Plotly.newPlot('plotDiv', plotData, { title });
 };
 
@@ -218,21 +198,21 @@ const getPlayerHistoricInfo = (range) => {
     for (let i = 0; i < points[0].values.length; i++) {
       const point = points[0].values[i];
 
-      const username = point[1];
+      const userId = point[1];
 
-      if (!(username in playerInfo)) playerInfo[username] = {};
+      if (!(userId in playerInfo)) playerInfo[userId] = {};
 
       const fullName = point[2];
-      playerInfo[username][fullName] = {};
+      playerInfo[userId][fullName] = {};
 
-      playerInfo[username][fullName].played = point[3];
-      playerInfo[username][fullName].wins = point[4];
-      playerInfo[username][fullName].kills = point[5];
+      playerInfo[userId][fullName].played = point[3];
+      playerInfo[userId][fullName].wins = point[4];
+      playerInfo[userId][fullName].kills = point[5];
     }
 
   const rowData = {};
   let idx = 0;
-  for (userName in playerInfo) {
+  for (userId in playerInfo) {
     let matches_played_total = 0;
     let wins_total = 0;
     let kills_total = 0;
@@ -243,27 +223,27 @@ const getPlayerHistoricInfo = (range) => {
     let kills_text = '';
     let kdr_text = '';
 
-    for (mode in playerInfo[userName]) {
-      const modeData = playerInfo[userName][mode];
+    for (mode in playerInfo[userId]) {
+      const modeData = playerInfo[userId][mode];
 
       matches_played_total += modeData.played;
-      matches_played_text += mode + ': ' + modeData.played + '\n';
+      matches_played_text += modes[mode] + ': ' + modeData.played + '\n';
 
       wins_total += modeData.wins;
-      wins_text += mode + ': ' + modeData.wins + '\n';
+      wins_text += modes[mode] + ': ' + modeData.wins + '\n';
 
       kills_total += modeData.kills;
-      kills_text += mode + ': ' + modeData.kills + '\n';
+      kills_text += modes[mode] + ': ' + modeData.kills + '\n';
 
-      kdr_text += mode + ': ' + Math.round((modeData.kills / modeData.played) * 1000) / 1000 + '\n';
+      kdr_text += modes[mode] + ': ' + Math.round((modeData.kills / modeData.played) * 1000) / 1000 + '\n';
     }
 
     kdr_total = kills_total / (matches_played_total - wins_total);
     kdr_total = Math.round(kdr_total * 1000) / 1000;
 
-    rowData[userName] = {
+    rowData[userId] = {
       id: idx++,
-      name: userNamesPerId[userName],
+      name: dataset[userId].name,
       matches_played_total: matches_played_total,
       matches_played: matches_played_text,
       wins_total: wins_total,
@@ -272,7 +252,7 @@ const getPlayerHistoricInfo = (range) => {
       kills: kills_text,
       kdr_total: kdr_total,
       kdr: kdr_text,
-      categ: categories[categsPerUser[userName]],
+      categ: dataset[userId].category,
     };
   }
   return rowData;
@@ -380,6 +360,9 @@ const getTableData = (range) => {
     }
   }
 
+  // Find maximums of these columns
+  const colsMax = ['matches_played_total', 'wins_total', 'kills_total', 'kdr_total', 'momentum', 'dmomentum'];
+
   for (colIdx = 0; colIdx < colsMax.length; colIdx++) {
     max = 0;
     min = 999999;
@@ -417,11 +400,8 @@ const updateTable = () => {
   loader.classList.remove('show');
   statsTable.setData(data.stats);
 
-  if (db) {
-    const lastUpdate = db.exec(`SELECT time FROM stats ORDER BY time DESC LIMIT 1`)[0].values[0][0];
-    const lastUpdateDate = new Date(lastUpdate).toLocaleString('es-ES');
-    document.getElementById('lastUpdate').innerHTML = `Última actualización: ${lastUpdateDate}`;
-  }
+  const lastUpdateDate = new Date(lastUpdate).toLocaleString('es-ES');
+  document.getElementById('lastUpdate').innerHTML = `Última actualización: ${lastUpdateDate}`;
 };
 
 document.querySelectorAll('#range, #timeStart, #timeEnd').forEach((item) => {
@@ -434,16 +414,14 @@ document.querySelectorAll('#range, #timeStart, #timeEnd').forEach((item) => {
       document.getElementById('timeSelector').style.display = 'none';
     }
     updateTable();
-    updatePlot(currentGraph.field, currentGraph.username);
+    updatePlot(currentGraph.field, currentGraph.userId);
   });
 });
 
 const loadMuaveTip = () => {
-  fetch(tipUrl)
-    .then((resp) => resp.json())
-    .then((data) => {
-      document.getElementById('muaveTip').innerHTML = `<p><strong>MuaveTip #${data.id} <a href="#" onclick="loadMuaveTip()">(pedir otro)</a>:</strong> ${data.tip}</p>`;
-    });
+  const id = Math.floor(Math.random() * tips.length);
+  const tip = tips[id];
+  document.getElementById('muaveTip').innerHTML = `<p><strong>MuaveTip #${id} <a href="#" onclick="loadMuaveTip()">(pedir otro)</a>:</strong> ${tip}</p>`;
   return false;
 };
 
