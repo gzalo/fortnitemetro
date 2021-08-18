@@ -1,4 +1,4 @@
-const tips = [
+export default [
   'Los rifles de francotirador son efectivos en un largo alcance.',
   'Las escopetas, los SMG y las pistolas son efectivas a corta distancia.',
   'A medida que el ojo de la tormenta se encoge, el daño de la tormenta aumenta.',

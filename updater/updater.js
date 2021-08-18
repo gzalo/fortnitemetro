@@ -1,3 +1,5 @@
+// STILL WORK IN PROGRESS
+
 // SELECT * FROM sampler WHERE type = 'update' ORDER BY time DESC LIMIT 1
 
 $delta = $startTime - strtotime($points[0]['time']);
