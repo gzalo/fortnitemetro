@@ -30,16 +30,19 @@ export default {
       name: 'SypherPK',
       category: 'Malísimos',
       db: 'data/db_5.sqlite3',
+      ignore: true,
     },
     {
       name: 'ninja',
       category: 'Malísimos',
       db: 'data/db_6.sqlite3',
+      ignore: true,
     },
     {
       name: 'Muselk',
       category: 'Malísimos',
       db: 'data/db_7.sqlite3',
+      ignore: true,
     },
     {
       name: 'XulElan',
