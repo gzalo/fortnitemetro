@@ -6,11 +6,11 @@
   </header>
 
   <main role="main" class="container">
-    <div id="plotDiv"></div>
-    <div id="statsTable"></div>
-    <div id="rangeSelector">
+    <div ref="plot"></div>
+    <div ref="statsTable"></div>
+    <div>
       Intervalo de tiempo:
-      <select v-model="range">
+      <select v-model="range" @change="updateRange">
         <option value="0" selected="selected">Todos los datos</option>
         <option value="730">Último mes</option>
         <option value="168">Última semana</option>
@@ -18,7 +18,10 @@
         <option value="1">Última hora</option>
         <option value="-1">Personalizar...</option>
       </select>
-      <span id="timeSelector" v-if="range == -1"><input type="date" v-model="timeStart"/> al <input type="date" v-model="timeEnd"/></span>
+    </div>
+    <div class="d-flex">
+      <datepicker v-model="dateStart" :disabled="range != -1" @update:modelValue="updateRange" /> &rarr;
+      <datepicker v-model="dateEnd" :disabled="range != -1" @update:modelValue="updateRange" />
     </div>
     <div>
       <p>
@@ -49,22 +52,14 @@ import tips from './tips';
 import dataset from './dataset';
 import Plotly from 'plotly.js-dist';
 import Tabulator from 'tabulator-tables';
-
-Date.prototype.toDateInputValue = function() {
-  const local = new Date(this);
-  local.setMinutes(this.getMinutes() - this.getTimezoneOffset());
-  return local.toJSON().slice(0, 10);
-};
+import Datepicker from 'vue3-datepicker';
 
 const roundToThree = (num) => +(Math.round(num + 'e+3') + 'e-3');
-const endDate = new Date();
-const day = 60 * 60 * 24 * 1000;
-const hourInMilliseconds = 3.6e6;
-const startDate = new Date(endDate.getTime() - 5 * day);
 const modes = ['solo', 'squad', 'duo'];
 
 export default {
   name: 'Fortnitemetro',
+  components: { Datepicker },
   mounted() {
     this.loadMuaveTip();
 
@@ -79,6 +74,7 @@ export default {
     }
 
     this.initTable();
+    this.updateRange();
 
     Promise.all([sqlPromise, ...dataPromise]).then(([SQL, ...buf]) => {
       for (let i = 0; i < buf.length; i++) {
@@ -90,8 +86,8 @@ export default {
   },
   data() {
     return {
-      timeStart: startDate.toDateInputValue(),
-      timeEnd: endDate.toDateInputValue(),
+      dateStart: new Date(),
+      dateEnd: new Date(),
       loading: true,
       lastUpdateDate: new Date(dataset.lastUpdate).toLocaleString('es-ES'),
       tips,
@@ -109,12 +105,11 @@ export default {
       this.tipId = Math.floor(Math.random() * tips.length);
     },
     updateTable() {
-      if (this.range == -1) return;
       this.data = this.getTableData();
       this.statsTable.setData(this.data.stats);
     },
     initTable() {
-      this.statsTable = new Tabulator('#statsTable', {
+      this.statsTable = new Tabulator(this.$refs.statsTable, {
         layout: 'fitColumns', //fit columns to width of table (optional)
         columns: [
           //Define Table Columns
@@ -177,8 +172,6 @@ export default {
     updatePlot() {
       if (this.plotField === null || this.plotUserId === null) return;
 
-      if (this.range == -1) return;
-
       const fieldMapping = {
         matches_played_total: 'played',
         wins_total: 'wins',
@@ -186,19 +179,16 @@ export default {
         kdr_total: 'cast(kills as float)/cast(played as float)',
       };
 
-      const now = Date.now();
       const dbField = fieldMapping[this.plotField];
-      const $startTime = now - this.range * hourInMilliseconds;
+      const $startTime = this.dateStart.getTime();
+      const $endTime = this.dateEnd.getTime();
 
       let points, pointsPrev;
 
-      if (this.range != 0) {
-        points = this.db[this.plotUserId].exec(`SELECT time,${dbField},mode FROM stats WHERE time BETWEEN $startTime AND $end ORDER BY time ASC`, { $startTime, $endTime: now });
-        pointsPrev = this.db[this.plotUserId].exec(`SELECT time,${dbField},mode FROM stats WHERE time < $startTime GROUP BY mode ORDER BY time DESC`, { $startTime });
-      } else {
-        points = this.db[this.plotUserId].exec(`SELECT time,${dbField},mode FROM stats ORDER BY time ASC`);
-        pointsPrev = [];
-      }
+      points = this.db[this.plotUserId].exec(`SELECT time,${dbField},mode FROM stats WHERE time BETWEEN $startTime AND $endTime ORDER BY time ASC`, { $startTime, $endTime });
+      pointsPrev = this.db[this.plotUserId].exec(`SELECT time,${dbField},mode FROM stats WHERE time in (select max(time) from stats where time < $startTime and mode = 0) or time in (select max(time) from stats where time < $startTime and mode = 1) or time in (select max(time) from stats where time < $startTime and mode = 2)`, {
+        $startTime,
+      });
 
       const data = {};
 
@@ -218,7 +208,7 @@ export default {
               line: { shape: 'hv' },
             };
 
-          data[name].x.push(new Date($startTime));
+          data[name].x.push(this.dateStart);
           data[name].y.push(point[1]);
         }
 
@@ -246,11 +236,11 @@ export default {
 
       const plotData = [];
       for (let name in data) {
-        //If there is at least one point for the data set, duplicate it at the end, with the current time
+        //If there is at least one point for the data set, duplicate it at the end, with the last time
         if (data[name].y.length != 0) {
           let lastVal = data[name].y[data[name].y.length - 1];
 
-          data[name].x.push(new Date(now));
+          data[name].x.push(this.dateEnd);
           data[name].y.push(lastVal);
         }
 
@@ -266,17 +256,18 @@ export default {
 
       const userName = dataset.users[this.plotUserId].name;
       const title = `${titleTranslation[this.plotField]} de ${userName}`;
-      Plotly.newPlot('plotDiv', plotData, { title });
+
+      Plotly.newPlot(this.$refs.plot, plotData, { title });
     },
     getTableData() {
       let rowDataOld = {},
         rowDataOlder = {};
       if (this.range != 0) {
-        rowDataOld = this.getPlayerHistoricInfo(this.range);
-        rowDataOlder = this.getPlayerHistoricInfo(this.range * 2);
+        rowDataOld = this.getPlayerHistoricInfo(this.dateStart.getTime());
+        rowDataOlder = this.getPlayerHistoricInfo(this.dateStart.getTime() - (this.dateEnd.getTime() - this.dateStart.getTime()));
       }
 
-      const rowData = this.getPlayerHistoricInfo(0);
+      const rowData = this.getPlayerHistoricInfo(this.dateEnd.getTime());
       for (let rowIdx in rowData) {
         const stat = rowData[rowIdx];
         stat.momentum = 0;
@@ -345,20 +336,9 @@ export default {
       this.plotUserId = cell.getRow().getData().id;
       this.updatePlot();
     },
-    getPlayerHistoricInfo(range) {
-      const now = Date.now();
-      const $startTime = now - range * hourInMilliseconds;
-
-      let query;
-      if (range == 0) {
-        //Time = 0 => current data
-        //query = 'SELECT time,mode,played,wins,kills from stats where time in (select max(time) from stats group by mode)';
-        query = 'SELECT time,mode,played,wins,kills from stats where time in (select max(time) from stats where mode = 0) or time in (select max(time) from stats where mode = 1) or time in (select max(time) from stats where mode = 2)';
-      } else {
-        // Get older data
-        // query = 'SELECT time,mode,played,wins,kills from stats where time in (select max(time) from stats where time < $startTime group by mode)';
-        query = 'SELECT time,mode,played,wins,kills from stats where time in (select max(time) from stats where time < $startTime and mode = 0) or time in (select max(time) from stats where time < $startTime and mode = 1) or time in (select max(time) from stats where time < $startTime and mode = 2)';
-      }
+    getPlayerHistoricInfo(time) {
+      const $startTime = time;
+      const query = 'SELECT time,mode,played,wins,kills from stats where time in (select max(time) from stats where time < $startTime and mode = 0) or time in (select max(time) from stats where time < $startTime and mode = 1) or time in (select max(time) from stats where time < $startTime and mode = 2)';
 
       const playerInfo = {};
       for (let i = 0; i < this.db.length; i++) {
@@ -472,6 +452,28 @@ export default {
       } else {
         return cell.getValue();
       }
+    },
+    updateRange() {
+      if (this.range == -1) {
+        this.updateTable();
+        this.updatePlot();
+        return;
+      }
+
+      const hourInMilliseconds = 3.6e6;
+
+      if (this.range == 0) {
+        this.dateEnd = new Date(dataset.lastUpdate);
+        this.dateStart = new Date(dataset.firstUpdate);
+      } else {
+        this.dateEnd = new Date(dataset.lastUpdate);
+        this.dateStart = new Date(this.dateEnd.getTime() - this.range * hourInMilliseconds);
+      }
+      this.updateTable();
+      this.updatePlot();
+    },
+    dateToYYYYMMDD(d) {
+      return d && new Date(d.getTime() - d.getTimezoneOffset() * 60 * 1000).toISOString().split('T')[0];
     },
   },
 };
@@ -626,6 +628,20 @@ body > .container {
 .fade-enter,
 .fade-leave-to {
   opacity: 0;
+}
+
+datepicker {
+  display: inline;
+}
+
+.d-flex {
+  display: flex;
+}
+
+.d-flex input {
+  width: 100px;
+  margin-right: 10px;
+  margin-left: 10px;
 }
 
 @import '~tabulator-tables/dist/css/tabulator_modern.css';

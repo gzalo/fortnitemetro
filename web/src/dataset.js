@@ -1,4 +1,5 @@
 export default {
+  firstUpdate: 1530414000000,
   lastUpdate: 1582165822000,
   users: [
     {
