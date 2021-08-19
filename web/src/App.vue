@@ -294,7 +294,7 @@ export default {
             else oldMomentum = 0;
 
             stat.momentum_old = oldMomentum;
-            stat.dmomentum = Math.round(((24 * (momentum - oldMomentum)) / this.range) * 1000) / 1000;
+            stat.dmomentum = Math.round(((24 * (momentum - oldMomentum)) / ((this.dateEnd.getTime() - this.dateStart.getTime()) / 3.6e6)) * 1000) / 1000;
           }
         }
       }
@@ -460,14 +460,12 @@ export default {
         return;
       }
 
-      const hourInMilliseconds = 3.6e6;
-
       if (this.range == 0) {
         this.dateEnd = new Date(dataset.lastUpdate);
         this.dateStart = new Date(dataset.firstUpdate);
       } else {
         this.dateEnd = new Date(dataset.lastUpdate);
-        this.dateStart = new Date(this.dateEnd.getTime() - this.range * hourInMilliseconds);
+        this.dateStart = new Date(this.dateEnd.getTime() - this.range * 3.6e6);
       }
       this.updateTable();
       this.updatePlot();
